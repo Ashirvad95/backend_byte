@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String
+  email        String    @unique
+  passwordHash String
+  patients     Patient[]
+  doctors      Doctor[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Patient {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  email       String?
+  phone       String?
+  address     String?
+  dateOfBirth DateTime?
+  gender      String?
+  ownerId     String    @db.Uuid
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  mappings    Mapping[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([ownerId])
+}
+
+model Doctor {
+  id             String    @id @default(uuid()) @db.Uuid
+  name           String
+  specialization String
+  email          String?
+  phone          String?
+  ownerId        String    @db.Uuid
+  owner          User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  mappings       Mapping[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([ownerId])
+}
+
+model Mapping {
+  id        String   @id @default(uuid()) @db.Uuid
+  patientId String   @db.Uuid
+  doctorId  String   @db.Uuid
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([patientId, doctorId])
+  @@index([patientId])
+  @@index([doctorId])
+}
